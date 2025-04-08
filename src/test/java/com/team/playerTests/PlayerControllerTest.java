@@ -397,189 +397,166 @@ public class PlayerControllerTest {
 
 
 
-
-
-@Test
-void createPlayer_ValidPlayer_ShouldRedirectToPlayerList() {
-    // Arrange
-    // Create a valid player object
-    PlayerEntity validPlayer = new PlayerEntity();
-    validPlayer.setFirstName("John");
-    validPlayer.setLastName("Doe");
-    validPlayer.setEmail("john.doe@example.com");
-   // validPlayer.setPhoneNumber("1234567890");
-    //validPlayer.setTeamName("Red Team");
-
-    // Mock the service behavior
-   // when(playerService.save(validPlayer)).thenReturn(validPlayer);
-
-    // Mock the BindingResult to indicate no validation errors
-    BindingResult bindingResult = mock(BindingResult.class);
-    when(bindingResult.hasErrors()).thenReturn(false);
-
-    // Act
-   // String viewName = playerController.createPlayer(validPlayer, bindingResult);
-
-    // Assert
-    // Verify that we're redirected to the player list
-   // assertEquals("redirect:/players", viewName);
-    
-    // Verify that the service method was called exactly once with the correct player
-    //verify(playerService, times(1)).save(validPlayer);
-    
-    // Verify that we checked for validation errors
-  //  verify(bindingResult, times(1)).hasErrors();
-    
-    // Verify no other interactions with bindingResult
-    verifyNoMoreInteractions(bindingResult);
-}
-
-
-
-
-
-
-
-
-
-
-    
-  /*   @Test
-    void createPlayer_ValidPlayer_ShouldRedirectToPlayerList() {
-        // Arrange
-        // Mock successful player creation
-        when(playerService.createPlayer(validPlayer)).thenReturn(validPlayer);
-        when(bindingResult.hasErrors()).thenReturn(false);
-
-        // Act
-        String viewName = playerController.createPlayer(validPlayer);
-
-        // Assert
-        // Verify that we're redirected to the player list
-        assertEquals("redirect:/players", viewName);
-        
-        // Verify that the service method was called exactly once with the correct player
-        verify(playerService, times(1)).createPlayer(validPlayer);
-    }*/
-
-  /*   @Test
-    void createPlayer_NullPlayer_ShouldReturnCreatePlayerView() {
-        // Arrange
-        PlayerEntity nullPlayer = null;
-
-        // Act
-        String viewName = playerController.createPlayer(nullPlayer);
-
-        // Assert
-        // Should return to the create player form
-        assertEquals("CreatePlayer", viewName);
-        
-        // Verify that the service was never called with null player
-       verify(playerService, never()).createPlayer(any());
-    }
-
-   @Test
-    void createPlayer_InvalidPlayer_WithValidationErrors_ShouldReturnCreatePlayerView() {
-        // Arrange
-        // Create a player with invalid data
-        PlayerEntity invalidPlayer = new PlayerEntity();
-        
-        // Mock validation errors
-        when(bindingResult.hasErrors()).thenReturn(true);
-        when(bindingResult.getFieldErrors()).thenReturn(
-            Arrays.asList(new FieldError("player", "firstName", "First name is required"))
-        );
-
-        // Act
-        String viewName = playerController.createPlayer(invalidPlayer);
-
-        // Assert
-        // Should return to the create player form
-        assertEquals("CreatePlayer", viewName);
-        
-        // Verify that the service was never called due to validation errors
-        verify(playerService, never()).createPlayer(any());
-    } */
-
-   /* @Test
-    void createPlayer_DuplicateEmail_ShouldHandleException() {
-        // Arrange
-        // Mock service to throw exception for duplicate email
-        when(playerService.createPlayer(validPlayer))
-            .thenThrow(new DuplicateEmailException("Email already exists"));
-
-        // Act
-        String viewName = playerController.createPlayer(validPlayer);
-
-        // Assert
-        // Should return to the create player form
-        assertEquals("CreatePlayer", viewName);
-        
-        // Verify that the service method was called
-        verify(playerService, times(1)).createPlayer(validPlayer);
-    }
-
+ /**
+     * Test case: Positive scenario where a player is created successfully.
+     * Expected: The method should redirect to the "get-players" endpoint.
+     */
     @Test
-    void createPlayer_ServiceFailure_ShouldHandleException() {
+    void createPlayer_ShouldRedirectToGetPlayers_WhenSuccessful() {
         // Arrange
-        // Mock service layer failure
-        when(playerService.createPlayer(validPlayer))
-            .thenThrow(new RuntimeException("Database connection failed"));
+        PlayerEntity player = new PlayerEntity();
+        player.setFirstName("John");
+        player.setLastName("Doe");
+        player.setEmail("john.doe@example.com");
+       // player.setRank("Captain");
+        player.setType("Professional");
+
+        when(playerService.create(player)).thenReturn(player);
+
+        // Act
+        String viewName = playerController.createPlayer(player);
+
+        // Assert
+        assertEquals("redirect:/player/get-players", viewName, "The method should redirect to the 'get-players' endpoint");
+        verify(playerService, times(1)).create(player);
+        assertNotNull(player.getCreatedOn(), "The createdOn field should be set");
+    }
+
+/**
+     * Test case: Negative scenario where the service throws an exception during player creation.
+     * Expected: The method should propagate the exception.
+     */
+    @Test
+    void createPlayer_ServiceThrowsException_ShouldPropagateException() {
+        // Arrange
+        PlayerEntity player = new PlayerEntity();
+        player.setFirstName("John");
+        player.setLastName("Doe");
+        player.setEmail("john.doe@example.com");
+       // player.setRank("Captain");
+        player.setType("Professional");
+
+        when(playerService.create(player)).thenThrow(new RuntimeException("Service error"));
 
         // Act & Assert
-        assertThrows(RuntimeException.class, () -> {
-            playerController.createPlayer(validPlayer);
-        });
-        
-        // Verify that the service method was called
-        verify(playerService, times(1)).createPlayer(validPlayer);
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> 
+            playerController.createPlayer(player)
+        );
+        assertEquals("Service error", exception.getMessage(), "The exception message should match");
+        verify(playerService, times(1)).create(player);
     }
 
+  /**
+     * Test case: Negative scenario where the input player entity is null.
+     * Expected: The method should throw a NullPointerException.
+     */
     @Test
-    void createPlayer_WithEmptyRequiredFields_ShouldReturnCreatePlayerView() {
-        // Arrange
-        PlayerEntity emptyPlayer = new PlayerEntity();
-        
-        // Mock validation errors for empty fields
-        when(bindingResult.hasErrors()).thenReturn(true);
-        List<FieldError> errors = Arrays.asList(
-            new FieldError("player", "firstName", "First name is required"),
-            new FieldError("player", "lastName", "Last name is required"),
-            new FieldError("player", "email", "Email is required")
+    void createPlayer_NullPlayer_ShouldThrowNullPointerException() {
+        // Act & Assert
+        assertThrows(NullPointerException.class, () -> 
+            playerController.createPlayer(null),
+            "The method should throw a NullPointerException when the input is null"
         );
-        when(bindingResult.getFieldErrors()).thenReturn(errors);
-
-        // Act
-        String viewName = playerController.createPlayer(emptyPlayer);
-
-        // Assert
-        assertEquals("CreatePlayer", viewName);
-        verify(playerService, never()).createPlayer(any());
+        verifyNoInteractions(playerService);
     }
 
-    @Test
-    void createPlayer_WithInvalidEmail_ShouldReturnCreatePlayerView() {
-        // Arrange
-        PlayerEntity playerWithInvalidEmail = new PlayerEntity();
-        playerWithInvalidEmail.setFirstName("John");
-        playerWithInvalidEmail.setLastName("Doe");
-        playerWithInvalidEmail.setEmail("invalid-email");
 
-        // Mock validation error for invalid email
-        when(bindingResult.hasErrors()).thenReturn(true);
-        when(bindingResult.getFieldErrors()).thenReturn(
-            Arrays.asList(new FieldError("player", "email", "Invalid email format"))
-        );
+
+  /**
+     * Test case: Positive scenario where an existing player is updated successfully.
+     * Expected: The method should redirect to the "get-players" endpoint.
+     */
+    @Test
+    void createPlayer_ShouldRedirectToGetPlayers_WhenUpdateIsSuccessful() {
+        // Arrange
+        Long id = 1L;
+        PlayerEntity existingPlayer = new PlayerEntity();
+        existingPlayer.setId(id);
+        existingPlayer.setFirstName("John");
+        existingPlayer.setLastName("Doe");
+        existingPlayer.setEmail("john.doe@example.com");
+       // existingPlayer.setRank("Captain");
+        existingPlayer.setType("Professional");
+
+        PlayerEntity updatedPlayer = new PlayerEntity();
+        updatedPlayer.setFirstName("Jane");
+        updatedPlayer.setLastName("Smith");
+        updatedPlayer.setEmail("jane.smith@example.com");
+       // updatedPlayer.setRank("Lieutenant");
+        updatedPlayer.setType("Amateur");
+        when(playerService.getById(id)).thenReturn(existingPlayer);
+        when(playerService.create(existingPlayer)).thenReturn(existingPlayer);
 
         // Act
-        String viewName = playerController.createPlayer(playerWithInvalidEmail);
+        String viewName = playerController.createPlayer(id, updatedPlayer);
 
         // Assert
-        assertEquals("CreatePlayer", viewName);
-        verify(playerService, never()).createPlayer(any());
-    } */
+        assertEquals("redirect:/player/get-players", viewName, "The method should redirect to the 'get-players' endpoint");
+        verify(playerService, times(1)).getById(id);
+        verify(playerService, times(1)).create(existingPlayer);
+        assertEquals("Jane", existingPlayer.getFirstName(), "The first name should be updated");
+        assertEquals("Smith", existingPlayer.getLastName(), "The last name should be updated");
+        assertEquals("jane.smith@example.com", existingPlayer.getEmail(), "The email should be updated");
+       // assertEquals("Lieutenant", existingPlayer.getRank(), "The rank should be updated");
+        assertEquals("Amateur", existingPlayer.getType(), "The type should be updated");
+        assertNotNull(existingPlayer.getUpdatedOn(), "The updatedOn field should be set");
+    }
+    
 
+     /**
+     * Test case: Negative scenario where the player ID does not exist.
+     * Expected: The method should throw a RuntimeException.
+     */
+    @Test
+    void createPlayer_PlayerIdDoesNotExist_ShouldThrowException() {
+        // Arrange
+        Long id = 1L;
+        PlayerEntity updatedPlayer = new PlayerEntity();
+        updatedPlayer.setFirstName("Jane");
+        updatedPlayer.setLastName("Smith");
+        updatedPlayer.setEmail("jane.smith@example.com");
+        //updatedPlayer.setRank("Lieutenant");
+        updatedPlayer.setType("Amateur");
 
+        when(playerService.getById(id)).thenThrow(new RuntimeException("Player not found"));
+
+        // Act & Assert
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> 
+            playerController.createPlayer(id, updatedPlayer)
+        );
+        assertEquals("Player not found", exception.getMessage(), "The exception message should match");
+        verify(playerService, times(1)).getById(id);
+        verify(playerService, times(0)).create(any());
+    }
+
+     /**
+     * Test case: Negative scenario where the service throws an exception during update.
+     * Expected: The method should propagate the exception.
+     */
+    @Test
+    void createPlayer2_ServiceThrowsException_ShouldPropagateException() {
+        // Arrange
+        Long id = 1L;
+        PlayerEntity existingPlayer = new PlayerEntity();
+        existingPlayer.setId(id);
+
+        PlayerEntity updatedPlayer = new PlayerEntity();
+        updatedPlayer.setFirstName("Jane");
+        updatedPlayer.setLastName("Smith");
+        updatedPlayer.setEmail("jane.smith@example.com");
+      //  updatedPlayer.setRank("Lieutenant");
+        updatedPlayer.setType("Amateur");
+
+        when(playerService.getById(id)).thenReturn(existingPlayer);
+        when(playerService.create(existingPlayer)).thenThrow(new RuntimeException("Service error"));
+ // Act & Assert
+ RuntimeException exception = assertThrows(RuntimeException.class, () -> 
+ playerController.createPlayer(id, updatedPlayer)
+);
+assertEquals("Service error", exception.getMessage(), "The exception message should match");
+verify(playerService, times(1)).getById(id);
+verify(playerService, times(1)).create(existingPlayer);
+}
 
 
 }
