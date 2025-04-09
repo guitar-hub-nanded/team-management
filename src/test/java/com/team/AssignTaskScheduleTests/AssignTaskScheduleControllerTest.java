@@ -27,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -409,6 +410,92 @@ import java.util.List;
         assertNull(assignTaskSchedule.getStartDate(), "Start date should remain null");
         assertNull(assignTaskSchedule.getEndDate(), "End date should remain null");
     } */
+
+
+
+
+     /**
+     * Test case: Positive scenario where an existing assign task schedule is updated successfully.
+     * Expected: The method should redirect to the root URL ("/").
+     */
+    @Test
+    void createAssignTaskSchedule_ShouldRedirectToRoot_WhenUpdateIsSuccessful() {
+        // Arrange
+        Long id = 1L;
+        AssignTaskScheduleEntity existingAssignTaskSchedule = new AssignTaskScheduleEntity();
+        existingAssignTaskSchedule.setId(id);
+        existingAssignTaskSchedule.setTask(new TaskEntity());
+        existingAssignTaskSchedule.setPlayer(new PlayerEntity());
+        existingAssignTaskSchedule.setSchedule(new ScheduleEntity());
+        existingAssignTaskSchedule.setStartDate(LocalDate.of(2025, 4, 1));
+        existingAssignTaskSchedule.setEndDate(LocalDate.of(2025, 4, 30));
+
+        AssignTaskScheduleEntity updatedAssignTaskSchedule = new AssignTaskScheduleEntity();
+        updatedAssignTaskSchedule.setTask(new TaskEntity());
+        updatedAssignTaskSchedule.setPlayer(new PlayerEntity());
+        updatedAssignTaskSchedule.setSchedule(new ScheduleEntity());
+        updatedAssignTaskSchedule.getSchedule().setStartDate(LocalDate.of(2025, 5, 1));
+        updatedAssignTaskSchedule.getSchedule().setEndDate(LocalDate.of(2025, 5, 31));
+        when(assignTaskScheduleService.getById(id)).thenReturn(existingAssignTaskSchedule);
+        when(assignTaskScheduleService.create(existingAssignTaskSchedule)).thenReturn(existingAssignTaskSchedule);
+
+        // Act
+        String viewName = assignTaskScheduleController.createAssignTaskSchedule(id, updatedAssignTaskSchedule);
+
+        // Assert
+        assertEquals("redirect:/", viewName, "The method should redirect to the root URL");
+        verify(assignTaskScheduleService, times(1)).getById(id);
+        verify(assignTaskScheduleService, times(1)).create(existingAssignTaskSchedule);
+
+        assertEquals(LocalDate.of(2025, 5, 1), existingAssignTaskSchedule.getStartDate(), "The start date should be updated");
+        assertEquals(LocalDate.of(2025, 5, 31), existingAssignTaskSchedule.getEndDate(), "The end date should be updated");
+        assertNotNull(existingAssignTaskSchedule.getUpdatedOn(), "The updatedOn field should be set");
+    }
+
+  /**
+     * Test case: Negative scenario where the assign task schedule ID does not exist.
+     * Expected: The method should throw a RuntimeException.
+     */
+    @Test
+    void createAssignTaskSchedule_IdDoesNotExist_ShouldThrowException() {
+        // Arrange
+        Long id = 1L;
+        AssignTaskScheduleEntity updatedAssignTaskSchedule = new AssignTaskScheduleEntity();
+        updatedAssignTaskSchedule.setTask(new TaskEntity());
+        updatedAssignTaskSchedule.setPlayer(new PlayerEntity());
+        updatedAssignTaskSchedule.setSchedule(new ScheduleEntity());
+
+        when(assignTaskScheduleService.getById(id)).thenThrow(new RuntimeException("AssignTaskSchedule not found"));
+
+        // Act & Assert
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> 
+            assignTaskScheduleController.createAssignTaskSchedule(id, updatedAssignTaskSchedule)
+        );
+        assertEquals("AssignTaskSchedule not found", exception.getMessage(), "The exception message should match");
+        verify(assignTaskScheduleService, times(1)).getById(id);
+        verify(assignTaskScheduleService, never()).create(any());
+    }
+
+/**
+     * Test case: Negative scenario where the input assign task schedule entity is null.
+     * Expected: The method should throw a NullPointerException.
+     */
+    @Test
+    void createAssignTaskSchedule_NullAssignTaskSchedule_ShouldThrowNullPointerException() {
+        // Arrange
+        Long id = 1L;
+
+        // Act & Assert
+        assertThrows(NullPointerException.class, () -> 
+            assignTaskScheduleController.createAssignTaskSchedule(id, null),
+            "The method should throw a NullPointerException when the input assign task schedule is null"
+        );
+       // verify(assignTaskScheduleService, never()).getById(id);
+        verify(assignTaskScheduleService, never()).create(any());
+    }
+
+
+
 
 
     /**
