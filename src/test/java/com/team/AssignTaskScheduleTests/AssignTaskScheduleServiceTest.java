@@ -285,7 +285,7 @@ verify(assignTaskScheduleRepository, times(1)).findByStartDateBetween(startDate,
      * Test case: Negative scenario where the start date or end date is null.
      * Expected: The method should return all task schedules.
      */
-  /*  @Test
+   /*  @Test
     void findByDateBetween_NullDates_ShouldReturnAllTaskSchedules() {
         // Arrange
         SearchDto searchDto = new SearchDto();
@@ -328,4 +328,31 @@ verify(assignTaskScheduleRepository, times(1)).findAll();
 assertEquals("Repository error", exception.getMessage(), "The exception message should match");
 verify(assignTaskScheduleRepository, times(1)).findByStartDateBetween(startDate, endDate);
 }
+
+
+ /**
+     * Test case: Positive scenario where a task schedule is created successfully.
+     * Expected: The method should return the saved task schedule entity.
+     */
+    @Test
+    void create_ShouldSaveAndReturnTaskSchedule() {
+        // Arrange
+        AssignTaskScheduleEntity assignTaskSchedule = new AssignTaskScheduleEntity();
+       // assignTaskSchedule.setTaskName("Sample Task");
+        assignTaskSchedule.setStartDate(LocalDate.of(2025, 4, 1));
+        assignTaskSchedule.setEndDate(LocalDate.of(2025, 4, 30));
+
+        when(assignTaskScheduleRepository.save(assignTaskSchedule)).thenReturn(assignTaskSchedule);
+
+        // Act
+        AssignTaskScheduleEntity result = assignTaskScheduleService.create(assignTaskSchedule);
+
+        // Assert
+        assertNotNull(result, "The result should not be null");
+        //assertEquals("Sample Task", result.getTaskName(), "The task name should match the expected value");
+        verify(assignTaskScheduleRepository, times(1)).save(assignTaskSchedule);
+    }
+
+    
+    
 }
